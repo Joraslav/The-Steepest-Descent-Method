@@ -2,6 +2,7 @@
 #include <vector>
 #include <algorithm>
 #include <cmath>
+#include <functional>
 
 using namespace std;
 using type = long double;
@@ -59,7 +60,7 @@ ostream& operator<<(ostream& out, vector<T> const& v)
 {
   for (auto const &i : v)
   {
-    out << i << '\t' << '\t';
+    out << i << '\t';
   }
   return out;
 }
@@ -74,89 +75,84 @@ type Norm(vector<type> const& v)
   return Rez;
 }
 
-vector<type> Grad_f(vector<type> const x)
+type f(vector<type> const& x)
 {
-    vector<type> Rez;
-
-    Rez.push_back(4.*pow(x[0]-2,3) + 2.*(x[0]-2.*x[1]));
-    Rez.push_back(-4.*(x[0]-2.*x[1]));
-
-    return Rez;
+  return pow(x[0]-2,4)+pow(x[0]-2*x[1],2);
 }
 
-type f(vector<type> const x)
+vector<type> Grad(vector<type> const& x)
 {
-    type Rez;
-    Rez = pow(x[0]-2.,4) + pow(x[0]-2.*x[1],2);
-    return Rez;
+  vector<type> Rez;
+  Rez.push_back(4.*pow(x[0]-2,3)+2.*(x[0]-2.*x[1]));
+  Rez.push_back(-4.*(x[0]-2.*x[1]));
+  return Rez;
 }
 
-vector<type> X_Next(vector<type> v, type p)
+vector<type> X_Next(type const& lyam, vector<type> const& x, function<vector<type>(vector<type> const&)> func)
 {
-    vector<type> Rez;
-    Rez.push_back(v[0] - p*Grad_f(v)[0]);
-    Rez.push_back(v[1] - p*Grad_f(v)[1]);
-    return Rez;
+  vector<type> Rez;
+  for (auto i{0u}; i < x.size(); ++i)
+  {
+    Rez.push_back(x[i]-lyam*func(x)[i]);
+  }
+  return Rez;
 }
 
-type FindLyam(vector<type> x_k,type const e)
+type df_lyam(vector<type> const& x, type const& lyam, function<vector<type>(vector<type> const&)> func_grad)
 {
-    type a=0, b=1, c;
-    while (abs(a-b) > e)
+  auto x_next = X_Next(lyam,x,func_grad);
+  return 4*pow(x_next[0]-2,3)*func_grad(x)[0]+2*(x_next[0]-2*x_next[1])*(func_grad(x)[1]-2*func_grad(x)[1]);
+  // return 4*pow(func_x(lyam,x)[0]-2,3)*func_grad(x)[0]+2*(func_x(lyam,x)[0]-2*func_x(lyam,x)[1])*(func_grad(x)[1]-2*func_grad(x)[1]);
+}
+
+type FindLyam(vector<type> const& x, type const& eps)
+{
+  type a=0, b=1, c;
+  while (abs(a-b)/2 > eps)
+  {
+    c = (a+b)/2;
+    if (df_lyam(x,a,&Grad) * df_lyam(x,c,&Grad) <= 0)
     {
-        c = (a+b)/2;
-        vector<type> x_ki_c = X_Next(x_k,c);
-        // vector<type> x_ki_b = X_Next(x_k,b);
-        if (f(x_k) * f(x_ki_c) <= 0)
-        {
-            a = c;
-        }
-        else
-        {
-            b = c;
-        }
+      b = c;
     }
-    return c;
+    else
+    {
+      a = c;
+    }
+  }
+  return c;  
 }
 
-vector<type> Spusk(vector<type> x_k, type const eps)
+vector<type> X_Solve(vector<type> &x, type const& eps)
 {
-    vector<type> x_next;
-    type lyam = FindLyam(x_k,eps);
-    x_next = X_Next(x_k,lyam);
-    unsigned short int iter = 0;
-    while (Norm(x_next-x_k) > eps)
-    {
-        if (iter%100 == 0)
-        {
-            cout << "Iteration\t" << iter << endl;
-        }
-        x_k.clear();
-        x_k = x_next;
-        x_next.clear();
-        type lyam_next = FindLyam(x_k,eps);
-        x_next = X_Next(x_k,lyam_next);
-        iter++;
-    }
-    return x_next;
+  type lyam = FindLyam(x,eps);
+  vector<type> x_next = X_Next(lyam,x,&Grad);
+  unsigned short int iter = 1;
+  while (Norm(Grad(x_next)) > eps)
+  {
+    cout << "Iteration\t" << iter << endl;
+    x.clear();
+    x = x_next;
+    x_next.clear();
+    lyam = FindLyam(x,eps);
+    x_next = X_Next(lyam,x,&Grad);
+    iter++;
+  }
+  return x_next;
 }
 
 int main()
 {
-    vector<type> x_f{2,1};
-    vector<type> x_0{2.2,0.5};
-    vector<type> grad_test = Grad_f(x_0);
-    cout << "Grad in x_0\t" << grad_test << endl;
+  vector<type> x_0{2.5,0.5};
+  cout << Grad(x_0) << endl;
+  vector<type> x_f{2,1};
+  cout << f(x_f) << endl;
+  type lt = 0.097;
+  cout << X_Next(lt,x_0,&Grad) << endl;
+  cout << df_lyam(x_0,lt,&Grad) << endl;
+  type eps = 0.001;
+  cout << FindLyam(x_0,eps) << endl;
+  cout << X_Solve(x_0,eps) << endl;
 
-    type cen = 0.5, st = 0;
-    type f0 = f(x_f);
-    cout << "Solve\t" << f0 << endl;
-
-    type lyam = FindLyam(x_0,0.01);
-    cout << "Test Luambda\t" << lyam << endl;
-
-    vector<type> ans = Spusk(x_0,0.0001);
-    cout << "x = " << ans << endl;
-
-    return 0;
+  return 0;
 }
