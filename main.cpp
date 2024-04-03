@@ -143,16 +143,11 @@ vector<type> X_Solve(vector<type> &x, type const& eps)
 
 int main()
 {
-  vector<type> x_0{2.5,0.5};
-  cout << Grad(x_0) << endl;
-  vector<type> x_f{2,1};
-  cout << f(x_f) << endl;
-  type lt = 0.097;
-  cout << X_Next(lt,x_0,&Grad) << endl;
-  cout << df_lyam(x_0,lt,&Grad) << endl;
-  type eps = 0.001;
-  cout << FindLyam(x_0,eps) << endl;
-  cout << X_Solve(x_0,eps) << endl;
+  vector<type> x_0{5,5};
+  type eps = 0.0001;
+
+  vector<type> x = X_Solve(x_0,eps);
+  cout << "Ans is\t" << x << endl;
 
   return 0;
 }
