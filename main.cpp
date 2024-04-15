@@ -56,7 +56,7 @@ type operator*(vector<T> const& l, vector<T> const& r)
 }
 
 template<class T>
-vector<type> operator*(type const& c, vector<type> const& v)
+vector<T> operator*(type const& c, vector<T> const& v)
 {
   vector<type> Rez{v};
   auto const nRows{Rez.size()};
@@ -110,11 +110,11 @@ vector<type> X_Next(type const& lyam, vector<type> const& x, function<vector<typ
   return Rez;
 }
 
-type df_lyam(vector<type> const& x, type const& lyam, function<vector<type>(vector<type> const&)> func_grad)
+type df_lyam(vector<type> const& x, type const& lyam)
 {
-  auto x_next = X_Next(lyam,x,func_grad);
-  return 4*pow(x_next[0]-2,3)*func_grad(x)[0]
-        +2*(x_next[0]-2*x_next[1])*(func_grad(x)[1]-2*func_grad(x)[1]);
+  vector<type> x_next = x - lyam*Grad(x);
+  return 4*pow(x_next[0]-2,3)*Grad(x)[0]
+        +2*(x_next[0]-2*x_next[1])*(Grad(x)[1]-2*Grad(x)[1]);
 }
 
 type FindLyam(vector<type> const& x, type const& eps)
@@ -123,7 +123,7 @@ type FindLyam(vector<type> const& x, type const& eps)
   while (abs(a-b)/2 > eps)
   {
     c = (a+b)/2;
-    if (df_lyam(x,a,&Grad) * df_lyam(x,c,&Grad) <= 0)     {b = c;}
+    if (df_lyam(x,a) * df_lyam(x,c) <= 0)     {b = c;}
     else      {a = c;}
   }
   return c;  
@@ -132,16 +132,16 @@ type FindLyam(vector<type> const& x, type const& eps)
 vector<type> X_Solve(vector<type> &x, type const& eps)
 {
   type lyam = FindLyam(x,eps);
-  vector<type> x_next = X_Next(lyam,x,&Grad);
+  vector<type> x_next = x - lyam*Grad(x);
   unsigned short int iter = 1;
-  while (Norm(Grad(x_next)) > eps)
+  while (Norm(Grad(x)) > eps)
   {
     cout << "Iteration\t" << iter << endl;
     x.clear();
     x = x_next;
     x_next.clear();
     lyam = FindLyam(x,eps);
-    x_next = X_Next(lyam,x,&Grad);
+    x_next = x - lyam*Grad(x);
     iter++;
   }
   return x_next;
@@ -150,7 +150,7 @@ vector<type> X_Solve(vector<type> &x, type const& eps)
 int main()
 {
   vector<type> x_0{5,5};
-  type eps = 0.001;
+  type eps = 0.000001;
 
   vector<type> x = X_Solve(x_0,eps);
   cout << "Ans is\t" << x << endl;
