@@ -56,6 +56,18 @@ type operator*(vector<T> const& l, vector<T> const& r)
 }
 
 template<class T>
+vector<type> operator*(type const& c, vector<type> const& v)
+{
+  vector<type> Rez{v};
+  auto const nRows{Rez.size()};
+  for (auto i{0u}; i < nRows; ++i)
+  {
+    Rez[i] = c*Rez[i];
+  }
+  return Rez;
+}
+
+template<class T>
 ostream& operator<<(ostream& out, vector<T> const& v)
 {
   for (auto const &i : v)
@@ -101,8 +113,8 @@ vector<type> X_Next(type const& lyam, vector<type> const& x, function<vector<typ
 type df_lyam(vector<type> const& x, type const& lyam, function<vector<type>(vector<type> const&)> func_grad)
 {
   auto x_next = X_Next(lyam,x,func_grad);
-  return 4*pow(x_next[0]-2,3)*func_grad(x)[0]+2*(x_next[0]-2*x_next[1])*(func_grad(x)[1]-2*func_grad(x)[1]);
-  // return 4*pow(func_x(lyam,x)[0]-2,3)*func_grad(x)[0]+2*(func_x(lyam,x)[0]-2*func_x(lyam,x)[1])*(func_grad(x)[1]-2*func_grad(x)[1]);
+  return 4*pow(x_next[0]-2,3)*func_grad(x)[0]
+        +2*(x_next[0]-2*x_next[1])*(func_grad(x)[1]-2*func_grad(x)[1]);
 }
 
 type FindLyam(vector<type> const& x, type const& eps)
@@ -111,14 +123,8 @@ type FindLyam(vector<type> const& x, type const& eps)
   while (abs(a-b)/2 > eps)
   {
     c = (a+b)/2;
-    if (df_lyam(x,a,&Grad) * df_lyam(x,c,&Grad) <= 0)
-    {
-      b = c;
-    }
-    else
-    {
-      a = c;
-    }
+    if (df_lyam(x,a,&Grad) * df_lyam(x,c,&Grad) <= 0)     {b = c;}
+    else      {a = c;}
   }
   return c;  
 }
@@ -144,7 +150,7 @@ vector<type> X_Solve(vector<type> &x, type const& eps)
 int main()
 {
   vector<type> x_0{5,5};
-  type eps = 0.0001;
+  type eps = 0.001;
 
   vector<type> x = X_Solve(x_0,eps);
   cout << "Ans is\t" << x << endl;
