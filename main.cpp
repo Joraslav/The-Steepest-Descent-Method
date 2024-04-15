@@ -150,7 +150,7 @@ vector<type> X_Solve(vector<type> &x, type const& eps)
 int main()
 {
   vector<type> x_0{5,5};
-  type eps = 0.000001;
+  type eps = 0.0001;
 
   vector<type> x = X_Solve(x_0,eps);
   cout << "Ans is\t" << x << endl;
